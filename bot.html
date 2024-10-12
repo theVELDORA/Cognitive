@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbot Popup</title>
+  <style>
+    /* General Styles */
+    body, html {
+      height: 100%;
+      margin: 0;
+      background-color: white;
+      font-family: 'Arial', sans-serif;
+    }
+
+    /* Centering the image button and text using flexbox */
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh; /* Full viewport height */
+    }
+
+    /* Image Button Styles */
+    .start-btn-img {
+      width: 150px;
+      height: 150px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .start-btn-img:hover {
+      transform: scale(1.1);
+    }
+
+    /* Start Conversation Text */
+    .start-text {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin-top: 10px;
+    }
+
+    /* Popup Background */
+    .chat-popup {
+      display: none;
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      border: 3px solid #f1f1f1;
+      z-index: 9;
+    }
+
+    /* Chatbox Container */
+    .chat-container {
+      max-width: 350px;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      animation: slideIn 0.5s ease-in-out;
+      position: relative;
+    }
+
+    /* Animation */
+    @keyframes slideIn {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Chat Header */
+    .chat-header {
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      color: #333;
+    }
+
+    /* Chat Image */
+    .chat-img {
+      display: block;
+      margin: 10px auto;
+      max-width: 100px;
+      border-radius: 50%;
+    }
+
+    /* Chat Messages Section */
+    .chat-messages {
+      margin: 20px 0;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 10px;
+      border: 1px solid #ddd;
+      background-color: #fff;
+      border-radius: 10px;
+    }
+
+    .chat-message {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+    }
+
+    /* Bot Message Styles */
+    .bot-message {
+      justify-content: flex-start;
+    }
+
+    .bot-message img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
+    .bot-message p {
+      background-color: #eee;
+      padding: 10px;
+      border-radius: 10px;
+      margin: 0;
+      max-width: 70%;
+    }
+
+    /* User Message Styles */
+    .user-message {
+      justify-content: flex-end;
+    }
+
+    .user-message img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-left: 10px;
+    }
+
+    .user-message p {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px;
+      border-radius: 10px;
+      margin: 0;
+      max-width: 70%;
+    }
+
+    /* Input area */
+    .chat-input {
+      display: flex;
+      align-items: center;
+      border-top: 1px solid #ddd;
+      padding: 10px;
+      background-color: #f1f1f1;
+      border-radius: 0 0 10px 10px;
+    }
+
+    .chat-input input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-input button {
+      margin-left: 10px;
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .chat-input button:hover {
+      background-color: #45a049;
+    }
+
+    /* Mic Icon */
+    .mic-icon {
+      margin-left: 10px;
+      cursor: pointer;
+      color: #888;
+      font-size: 20px;
+    }
+
+    .mic-icon:hover {
+      color: #4CAF50;
+    }
+
+    /* Close Button */
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 18px;
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+    }
+
+    .close-btn:hover {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Image button container to center the image and text -->
+  <div class="button-container">
+    <img src="https://media.tenor.com/byrG6S06Fj0AAAAM/chocobust.gif" alt="Start Chatbot" class="start-btn-img" onclick="openChat()">
+    <div class="start-text">Start Conversation</div>
+  </div>
+
+  <!-- Chat Popup -->
+  <div class="chat-popup" id="chatPopup">
+    <div class="chat-container">
+      <button class="close-btn" onclick="closeChat()">&times;</button>
+      <div class="chat-header">Chat with CHINKU!</div>
+      <img src="https://i.pinimg.com/originals/77/33/6e/77336e8de669070fbf9f910570cd3bba.gif" alt="Chatbot" class="chat-img">
+
+      <!-- Chat Messages -->
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-message bot-message">
+          <img src="https://i.pinimg.com/236x/d0/6b/aa/d06baab9b0052a93401480baea16fdc4.jpg" alt="Bot">
+          <p>Hello! How can I assist you today?</p>
+        </div>
+      </div>
+
+      <!-- Chat Input -->
+      <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+        <span class="mic-icon" onclick="startVoiceTyping()">🎤</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Open Chat Popup
+    function openChat() {
+      document.getElementById("chatPopup").style.display = "block";
+    }
+
+    // Close Chat Popup
+    function closeChat() {
+      document.getElementById("chatPopup").style.display = "none";
+    }
+
+    // Send message function
+    function sendMessage() {
+      var userInput = document.getElementById("userInput").value;
+      if (userInput.trim() !== "") {
+        var messageContainer = document.getElementById("chatMessages");
+
+        // User Message
+        var userMessageDiv = document.createElement("div");
+        userMessageDiv.classList.add("chat-message", "user-message");
+        userMessageDiv.innerHTML = `<p>${userInput}</p><img src="https://icons.veryicon.com/png/o/internet--web/55-common-web-icons/person-4.png" alt="User">`;
+        messageContainer.appendChild(userMessageDiv);
+
+        // Clear input field
+        document.getElementById("userInput").value = "";
+
+        // Scroll to bottom
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+
+        // Simulate a bot response
+        setTimeout(() => {
+          var botMessageDiv = document.createElement("div");
+          botMessageDiv.classList.add("chat-message", "bot-message");
+          botMessageDiv.innerHTML = `<img src="https://i.pinimg.com/236x/d0/6b/aa/d06baab9b0052a93401480baea16fdc4.jpg" alt="Bot"><p>I'm here to help!</p>`;
+          messageContainer.appendChild(botMessageDiv);
+          messageContainer.scrollTop = messageContainer.scrollHeight;
+        }, 1000);
+      }
+    }
+
+    // Placeholder for voice typing (to be implemented later)
+    function startVoiceTyping() {
+      alert("Voice typing functionality will be added here.");
+    }
+  </script>
+</body>
+</html>

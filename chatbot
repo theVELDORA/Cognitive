@@ -1,0 +1,96 @@
+import mysql.connector
+from langchain_ollama import OllamaLLM
+from langchain_core.prompts import ChatPromptTemplate
+from datetime import datetime
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
+
+
+# MySQL configuration
+db_config = {
+    'user': 'root',  # Replace with your MySQL username
+    'password': 'Gho@st.#1232@',  # Replace with your MySQL password
+    'host': 'localhost',  # Replace with your MySQL host if needed
+    'database': 'chatbot_db',  # Replace with your database name
+}
+
+# Connect to MySQL
+def connect_db():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        return conn
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return None
+
+# Insert conversation into MySQL
+def store_conversation(user_input, chatbot_response):
+    conn = connect_db()
+    if conn:
+        cursor = conn.cursor()
+        query = "INSERT INTO chat_history (user_input, chatbot_response) VALUES (%s, %s)"
+        values = (user_input, chatbot_response)
+        cursor.execute(query, values)
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+# LangChain setup
+template = """
+Answer the question below.
+
+Here is the conversation history:{context}
+
+Question:{question}
+
+Answer:
+"""
+
+# Define the model name
+model_name = "bablu"
+
+model = OllamaLLM(model=model_name)
+prompt = ChatPromptTemplate.from_template(template)
+chain = prompt | model
+
+# Define the chatbot's name
+chatbot_name = "CodeBuddy"
+
+# Preprocess user input using NLTK
+def preprocess_input(user_input):
+    # Tokenize the input
+    tokens = word_tokenize(user_input)
+    # Remove stopwords
+    stop_words = set(stopwords.words('english'))
+    filtered_tokens = [word for word in tokens if word.lower() not in stop_words]
+    # Stem the tokens
+    ps = PorterStemmer()
+    stemmed_tokens = [ps.stem(word) for word in filtered_tokens]
+    # Join tokens back into a string
+    preprocessed_input = ' '.join(stemmed_tokens)
+    return preprocessed_input
+
+def handle_conversation():
+    context = ""
+    print(f"Welcome to {chatbot_name}! Type 'exit' to quit.")
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() == "exit":
+            break
+        else:
+            # Preprocess the user input
+            preprocessed_input = preprocess_input(user_input)
+            result = chain.invoke({"context": context, "question": preprocessed_input})
+            chatbot_response = result.strip()
+            print(f"{chatbot_name}: {chatbot_response}")
+            
+            # Update context
+            context += f"\nUser: {user_input}\n{chatbot_name}: {chatbot_response}"
+            
+            # Store the conversation in the database
+            store_conversation(user_input, chatbot_response)
+
+if __name__ == "__main__":
+    handle_conversation()

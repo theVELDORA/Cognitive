@@ -37,6 +37,19 @@ def store_conversation(user_input, chatbot_response):
         cursor.close()
         conn.close()
 
+# Retrieve conversation history from MySQL
+def get_conversation_history():
+    conn = connect_db()
+    if conn:
+        cursor = conn.cursor()
+        query = "SELECT user_input, chatbot_response FROM chat_history ORDER BY id ASC"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return rows
+    return []
+
 # LangChain setup
 template = """
 Answer the question below.
@@ -73,7 +86,10 @@ def preprocess_input(user_input):
     return preprocessed_input
 
 def handle_conversation():
-    context = ""
+    # Retrieve and format conversation history
+    history = get_conversation_history()
+    context = "\n".join([f"User: {row[0]}\n{chatbot_name}: {row[1]}" for row in history])
+    
     print(f"Welcome to {chatbot_name}! Type 'exit' to quit.")
     while True:
         user_input = input("You: ")
@@ -94,3 +110,4 @@ def handle_conversation():
 
 if __name__ == "__main__":
     handle_conversation()
+

@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -255,34 +257,44 @@
       document.getElementById("chatPopup").style.display = "none";
     }
 
-    // Send message function
     function sendMessage() {
       var userInput = document.getElementById("userInput").value;
       if (userInput.trim() !== "") {
-        var messageContainer = document.getElementById("chatMessages");
-
-        // User Message
-        var userMessageDiv = document.createElement("div");
-        userMessageDiv.classList.add("chat-message", "user-message");
-        userMessageDiv.innerHTML = `<p>${userInput}</p><img src="https://icons.veryicon.com/png/o/internet--web/55-common-web-icons/person-4.png" alt="User">`;
-        messageContainer.appendChild(userMessageDiv);
-
-        // Clear input field
-        document.getElementById("userInput").value = "";
-
-        // Scroll to bottom
-        messageContainer.scrollTop = messageContainer.scrollHeight;
-
-        // Simulate a bot response
-        setTimeout(() => {
-          var botMessageDiv = document.createElement("div");
-          botMessageDiv.classList.add("chat-message", "bot-message");
-          botMessageDiv.innerHTML = `<img src="https://i.pinimg.com/236x/d0/6b/aa/d06baab9b0052a93401480baea16fdc4.jpg" alt="Bot"><p>I'm here to help!</p>`;
-          messageContainer.appendChild(botMessageDiv);
+          var messageContainer = document.getElementById("chatMessages");
+  
+          // User Message
+          var userMessageDiv = document.createElement("div");
+          userMessageDiv.classList.add("chat-message", "user-message");
+          userMessageDiv.innerHTML = `<p>${userInput}</p><img src="https://icons.veryicon.com/png/o/internet--web/55-common-web-icons/person-4.png" alt="User">`;
+          messageContainer.appendChild(userMessageDiv);
+  
+          // Clear input field
+          document.getElementById("userInput").value = "";
+  
+          // Scroll to bottom
           messageContainer.scrollTop = messageContainer.scrollHeight;
-        }, 1000);
+  
+          // Send request to Flask server
+          fetch('http://localhost:5000/chat', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({message: userInput}),
+          })
+          .then(response => response.json())
+          .then(data => {
+              var botMessageDiv = document.createElement("div");
+              botMessageDiv.classList.add("chat-message", "bot-message");
+              botMessageDiv.innerHTML = `<img src="https://i.pinimg.com/236x/d0/6b/aa/d06baab9b0052a93401480baea16fdc4.jpg" alt="Bot"><p>${data.response}</p>`;
+              messageContainer.appendChild(botMessageDiv);
+              messageContainer.scrollTop = messageContainer.scrollHeight;
+          })
+          .catch((error) => {
+              console.error('Error:', error);
+          });
       }
-    }
+  }
 
     // Placeholder for voice typing (to be implemented later)
     function startVoiceTyping() {

@@ -1,12 +1,15 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import mysql.connector
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
-from datetime import datetime
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # MySQL configuration
 db_config = {
@@ -85,29 +88,27 @@ def preprocess_input(user_input):
     preprocessed_input = ' '.join(stemmed_tokens)
     return preprocessed_input
 
-def handle_conversation():
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.json
+    user_input = data['message']
+    
     # Retrieve and format conversation history
     history = get_conversation_history()
     context = "\n".join([f"User: {row[0]}\n{chatbot_name}: {row[1]}" for row in history])
     
-    print(f"Welcome to {chatbot_name}! Type 'exit' to quit.")
-    while True:
-        user_input = input("You: ")
-        if user_input.lower() == "exit":
-            break
-        else:
-            # Preprocess the user input
-            preprocessed_input = preprocess_input(user_input)
-            result = chain.invoke({"context": context, "question": preprocessed_input})
-            chatbot_response = result.strip()
-            print(f"{chatbot_name}: {chatbot_response}")
-            
-            # Update context
-            context += f"\nUser: {user_input}\n{chatbot_name}: {chatbot_response}"
-            
-            # Store the conversation in the database
-            store_conversation(user_input, chatbot_response)
+    # Preprocess the user input
+    preprocessed_input = preprocess_input(user_input)
+    
+    # Generate response using LangChain
+    result = chain.invoke({"context": context, "question": preprocessed_input})
+    chatbot_response = result.strip()
+    
+    # Store the conversation in the database
+    store_conversation(user_input, chatbot_response)
+    
+    return jsonify({"response": chatbot_response})
 
 if __name__ == "__main__":
-    handle_conversation()
-
+    app.run(debug=True)
